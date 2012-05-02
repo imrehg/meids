@@ -140,7 +140,11 @@ static int me_probe_usb(struct usb_interface *interface, const struct usb_device
 		err = -ENOMEM;
 		goto ERROR_1;
 	}
+#ifndef init_MUTEX
+    sema_init(dev->usb_DMA_semaphore, 1);
+#else
 	init_MUTEX(dev->usb_DMA_semaphore);
+#endif
 
 	/// Initialize USB transfer status.
 	atomic_set(&dev->usb_transfer_status, 0);

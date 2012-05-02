@@ -442,7 +442,11 @@ int me_subdevice_init(me_subdevice_t* subdevice)
 #   endif	// ME_ATRENATIVE_LOCKS
 #endif	// SCALE_RT
 #  else
+#    ifndef init_MUTEX
+    sema_init(&(subdevice->subdevice_lock.subdevice_semaphore), 1);
+#    else
 	init_MUTEX(&(subdevice->subdevice_lock.subdevice_semaphore));
+#    endif
 #  endif
 # ifdef PROTECTOR_CHECK
 	subdevice->subdevice_lock.status = 0;

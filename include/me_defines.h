@@ -44,6 +44,8 @@
 #define ME_QUERY_FORCE_FLAGS 			0x100	// For lockal devices read information from driver. For remote ones read information from copy in remote library contects.
 #define ME_QUERY_DEEP_FORCE_FLAGS 		0x300	// Always read information from driver (slow).
 
+/*
+//REMOVED!
 #define ME_AI_EXTRA_RANGE				0x10000000
-
+*/
 #endif

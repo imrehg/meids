@@ -95,7 +95,9 @@ static int me0700_ai_postinit(me_subdevice_t* subdevice, void* args);
 
 static int me0700_ai_irq_handle(me_subdevice_t* subdevice, uint32_t irq_status);
 
-static int convert_to_me0700_range(me4600_ai_subdevice_t* instance, int range, int me4600_ranges_number);
+static int convert_to_current_range(int range);
+static int convert_to_me4600_range(int range);
+static int me0700_ai_test_lock(me0700_ai_subdevice_t* instance);
 
 static void me0700_ai_destructor(me_subdevice_t* subdevice)
 {
@@ -142,7 +144,7 @@ static void me0700_ai_destructor(me_subdevice_t* subdevice)
 }
 
 static int me0700_ai_io_reset_subdevice(me_subdevice_t* subdevice, struct file* filep, int flags)
-{/// TODO DONE?
+{
 	me0700_ai_subdevice_t* instance;
 	int i;
 	int err = ME_ERRNO_SUCCESS;
@@ -164,6 +166,7 @@ static int me0700_ai_io_reset_subdevice(me_subdevice_t* subdevice, struct file* 
 		instance->irq_rised = 0;
 		instance->irq_status = 0x00;
 		instance->irq_status_flag = 0;
+        instance->irq_count = 0;
 
 		err = instance->ai_instance->base.me_subdevice_io_reset_subdevice((me_subdevice_t*)instance->ai_instance, filep, flags);
 		if (err)
@@ -198,54 +201,69 @@ static int me0700_ai_io_single_config_check(me0700_ai_subdevice_t* instance, int
 		return ME_ERRNO_INVALID_CHANNEL;
 	}
 
+	// Check current ranges. Voltage ranges will be tested in me46xx part
 	if (channel < instance->number_I_channels)
 	{// me0700 spacific AI channels
-		if (convert_to_me0700_range(instance->ai_instance, single_config, instance->me4600_ranges_number) == ME0700_AI_RANGE_INVALID)
+		if ((single_config < 1) || (single_config > ME0700_AI_EXTRA_RANGE_NUMBER))
+		{
+			PERROR("Invalid range specified. Must be current range.\n");
 			return ME_ERRNO_INVALID_SINGLE_CONFIG;
+		}
+#if !defined(MEAXON_500A)
+		if (single_config == 1)
+		{
+			PERROR("500A is not supported any more!\n");
+			return ME_ERRNO_INVALID_SINGLE_CONFIG;
+		}
+#endif
 	}
 
 	return ME_ERRNO_SUCCESS;
 }
 
-static int convert_to_me0700_range(me4600_ai_subdevice_t* instance, int range, int me4600_ranges_number)
+static int convert_to_current_range(int range)
 {
 	int me0700_range;
 
-	switch (range - me4600_ranges_number)
+	switch (range)
 	{
 		case 0:
-			me0700_range = ME0700_AI_RANGE_500_AMPERE;
+			me0700_range = ME0700_AI_RANGE_INVALID;
 		break;
 
 		case 1:
-			me0700_range = ME0700_AI_RANGE_50_AMPERE;
+			me0700_range = ME0700_AI_RANGE_500_AMPERE;
 		break;
 
 		case 2:
-			me0700_range = ME0700_AI_RANGE_25_AMPERE;
+			me0700_range = ME0700_AI_RANGE_50_AMPERE;
 		break;
 
 		case 3:
-			me0700_range = ME0700_AI_RANGE_2500_MILLIAMPERE;
+			me0700_range = ME0700_AI_RANGE_25_AMPERE;
 		break;
 
 		case 4:
-			me0700_range = ME0700_AI_RANGE_250_MILLIAMPERE;
-		break;
-
-		case 0x1000004:
-			me0700_range = ME0700_AI_RANGE_250X_MILLIAMPERE;
+			me0700_range = ME0700_AI_RANGE_2500_MILLIAMPERE;
 		break;
 
 		case 5:
-			me0700_range = ME0700_AI_RANGE_25_MILLIAMPERE;
+			me0700_range = ME0700_AI_RANGE_250_MILLIAMPERE;
 		break;
 
 		case 6:
-			me0700_range = ME0700_AI_RANGE_2500_MICROAMPERE;
+			me0700_range = ME0700_AI_RANGE_250X_MILLIAMPERE;
 		break;
 
 		case 7:
+			me0700_range = ME0700_AI_RANGE_25_MILLIAMPERE;
+		break;
+
+		case 8:
+			me0700_range = ME0700_AI_RANGE_2500_MICROAMPERE;
+		break;
+
+		case 9:
 			me0700_range = ME0700_AI_RANGE_250_MICROAMPERE;
 		break;
 
@@ -255,9 +273,25 @@ static int convert_to_me0700_range(me4600_ai_subdevice_t* instance, int range, i
 	return me0700_range;
 }
 
+static int convert_to_me4600_range(int range)
+{
+	if (range <= 0)
+	{
+		return range;
+	}
+	else if (range <= ME0700_AI_EXTRA_RANGE_NUMBER)
+	{
+		return -1;
+	}
+	else
+	{
+		return range - ME0700_AI_EXTRA_RANGE_NUMBER;
+	}
+}
+
 static int me0700_ai_io_single_config(me_subdevice_t* subdevice, struct file* filep, int channel,
 										int single_config, int ref, int trig_chain, int trig_type, int trig_edge, int flags)
-{/// TODO DONE?
+{
 	me0700_ai_subdevice_t* instance;
 	int err = ME_ERRNO_SUCCESS;
 
@@ -272,15 +306,15 @@ static int me0700_ai_io_single_config(me_subdevice_t* subdevice, struct file* fi
 
 		if (channel < instance->number_I_channels)
 		{// Pre-set relays. -> Give hardware time to settle down.
-			instance->me0700_ranges[channel] = convert_to_me0700_range(instance->ai_instance, single_config, instance->me4600_ranges_number);
+			instance->me0700_ranges[channel] = convert_to_current_range(single_config);
 			ME_IRQ_LOCK(((struct NET2282_usb_device *)instance->base.dev)->usb_IRQ_semaphore);
-				(void)me0700_set_range_relay(instance, instance->me0700_ranges[channel], ME0700_AI_CHANNEL_ADDR[channel]);
+				(void)me0700_set_range_relay(instance, instance->me0700_ranges[channel], ME0700_AI_CHANNEL_ADDR[channel], 1);
 			ME_IRQ_UNLOCK(((struct NET2282_usb_device *)instance->base.dev)->usb_IRQ_semaphore);
 			err = instance->ai_instance->base.me_subdevice_io_single_config((me_subdevice_t*)instance->ai_instance, filep, channel, 2, ME_REF_AI_GROUND, trig_chain, trig_type, trig_edge, flags);
 		}
 		else
 		{
-			err = instance->ai_instance->base.me_subdevice_io_single_config((struct me_subdevice* )instance->ai_instance, filep, channel + (4 - instance->number_I_channels), single_config, ME_REF_AI_GROUND, trig_chain, trig_type, trig_edge, flags);
+			err = instance->ai_instance->base.me_subdevice_io_single_config((struct me_subdevice* )instance->ai_instance, filep, channel + (4 - instance->number_I_channels), convert_to_me4600_range(single_config), ME_REF_AI_GROUND, trig_chain, trig_type, trig_edge, flags);
 		}
 	ME_SUBDEVICE_EXIT;
 
@@ -288,7 +322,7 @@ static int me0700_ai_io_single_config(me_subdevice_t* subdevice, struct file* fi
 }
 
 static int me0700_ai_io_single_read(me_subdevice_t* subdevice, struct file* filep, int channel, int* value, int time_out, int flags)
-{/// DONE
+{
 	me0700_ai_subdevice_t* instance;
 	int me4600_channel = channel;
 	int err = ME_ERRNO_SUCCESS;
@@ -302,9 +336,18 @@ static int me0700_ai_io_single_read(me_subdevice_t* subdevice, struct file* file
 		{// Re-set relays. -> Remove any overflows.
 			if (instance->me0700_ranges[channel] == ME0700_AI_RANGE_INVALID)
 			{
+				PERROR("Invalid range specified. Must be current range.\n");
 				err = ME_ERRNO_PREVIOUS_CONFIG;
 				goto ERROR;
 			}
+#if !defined(MEAXON_500A)
+			else if (instance->me0700_ranges[channel] == ME0700_AI_RANGE_500_AMPERE)
+			{
+				PERROR("500A is not supported any more!\n");
+				err = ME_ERRNO_PREVIOUS_CONFIG;
+				goto ERROR;
+			}
+#endif
 			ME_IRQ_LOCK(((struct NET2282_usb_device *)instance->base.dev)->usb_IRQ_semaphore);
 				err = me0700_update_range_relay(instance, instance->me0700_ranges[channel], ME0700_AI_CHANNEL_ADDR[channel]);
 			ME_IRQ_UNLOCK(((struct NET2282_usb_device *)instance->base.dev)->usb_IRQ_semaphore);
@@ -324,7 +367,7 @@ ERROR:
 }
 
 static int me0700_ai_io_stream_read(me_subdevice_t* subdevice, struct file* filep, int read_mode, int* values, int* count, int time_out, int flags)
-{/// DONE
+{
 	me0700_ai_subdevice_t* instance = (me0700_ai_subdevice_t *) subdevice;
 
 	PDEBUG("executed. idx=0\n");
@@ -333,7 +376,7 @@ static int me0700_ai_io_stream_read(me_subdevice_t* subdevice, struct file* file
 }
 
 static int me0700_ai_io_stream_start(me_subdevice_t* subdevice, struct file* filep, int start_mode, int time_out, int flags)
-{/// DONE
+{
 	me0700_ai_subdevice_t* instance = (me0700_ai_subdevice_t *) subdevice;
 	int i;
 	int err;
@@ -345,8 +388,16 @@ static int me0700_ai_io_stream_start(me_subdevice_t* subdevice, struct file* fil
 	{
 		if (instance->me0700_ranges[i] == ME0700_AI_RANGE_INVALID)
 		{
+			PERROR("Invalid range specified. Must be current range.\n");
 			return ME_ERRNO_PREVIOUS_CONFIG;
 		}
+#if !defined(MEAXON_500A)
+		else if (instance->me0700_ranges[i] == ME0700_AI_RANGE_500_AMPERE)
+		{
+			PERROR("500A is not supported any more!\n");
+			return ME_ERRNO_PREVIOUS_CONFIG;
+		}
+#endif
 		else if (instance->me0700_ranges[i] != ME0700_AI_RANGE_NONE)
 		{// Re-set relays. -> Remove any overflows.
 			ME_IRQ_LOCK(((struct NET2282_usb_device *)instance->base.dev)->usb_IRQ_semaphore);
@@ -360,7 +411,7 @@ static int me0700_ai_io_stream_start(me_subdevice_t* subdevice, struct file* fil
 }
 
 static int me0700_ai_io_stream_stop(me_subdevice_t* subdevice, struct file* filep, int stop_mode, int time_out, int flags)
-{/// DONE
+{
 	me0700_ai_subdevice_t* instance = (me0700_ai_subdevice_t *) subdevice;
 
 	PDEBUG("executed. idx=0\n");
@@ -369,7 +420,7 @@ static int me0700_ai_io_stream_stop(me_subdevice_t* subdevice, struct file* file
 }
 
 static int me0700_ai_io_stream_status(me_subdevice_t* subdevice, struct file* filep, int wait, int* status, int* values, int flags)
-{/// DONE
+{
 	me0700_ai_subdevice_t* instance = (me0700_ai_subdevice_t *) subdevice;
 
 	PDEBUG("executed. idx=0\n");
@@ -378,7 +429,7 @@ static int me0700_ai_io_stream_status(me_subdevice_t* subdevice, struct file* fi
 }
 
 static int me0700_ai_io_stream_new_values(me_subdevice_t* subdevice, struct file* filep, int time_out, int* count, int flags)
-{/// DONE
+{
 	me0700_ai_subdevice_t* instance = (me0700_ai_subdevice_t *) subdevice;
 
 	PDEBUG("executed. idx=0\n");
@@ -387,7 +438,7 @@ static int me0700_ai_io_stream_new_values(me_subdevice_t* subdevice, struct file
 }
 
 static int me0700_ai_io_stream_config_check(me0700_ai_subdevice_t* instance, meIOStreamSimpleConfig_t* config_list, int count, int flags)
-{/// TODO DONE?
+{
 	int i;
 	int tmp_range;
 	int err = ME_ERRNO_SUCCESS;
@@ -407,13 +458,20 @@ static int me0700_ai_io_stream_config_check(me0700_ai_subdevice_t* instance, meI
 
 		if (config_list[i].iChannel < instance->number_I_channels)
 		{
-			tmp_range = convert_to_me0700_range(instance->ai_instance, config_list[i].iRange, instance->me4600_ranges_number);
+			tmp_range = convert_to_current_range(config_list[i].iRange);
 			if (tmp_range == ME0700_AI_RANGE_INVALID)
 			{
 				PERROR("Invalid range specified. Must be current range.\n");
 				instance->me0700_ranges[config_list[i].iChannel] = ME0700_AI_RANGE_INVALID;
 				return ME_ERRNO_INVALID_STREAM_CONFIG;
 			}
+#if !defined(MEAXON_500A)
+			else if (tmp_range == ME0700_AI_RANGE_500_AMPERE)
+			{
+				PERROR("500A is not supported any more!\n");
+				return ME_ERRNO_INVALID_STREAM_CONFIG;
+			}
+#endif
 
 			if (instance->me0700_ranges[config_list[i].iChannel] == ME0700_AI_RANGE_NONE)
 			{
@@ -436,7 +494,7 @@ static int me0700_ai_io_stream_config_check(me0700_ai_subdevice_t* instance, meI
 
 static int me0700_ai_io_stream_config(me_subdevice_t* subdevice, struct file* filep,
 										meIOStreamSimpleConfig_t* config_list, int count,  meIOStreamSimpleTriggers_t* trigger, int fifo_irq_threshold, int flags)
-{/// TODO DONE?
+{
 	me0700_ai_subdevice_t* instance;
 	meIOStreamSimpleConfig_t* config_list_copy;
 	int i;
@@ -475,6 +533,7 @@ static int me0700_ai_io_stream_config(me_subdevice_t* subdevice, struct file* fi
 			else
 			{
 				config_list_copy[i].iChannel += 4 - instance->number_I_channels;
+				config_list_copy[i].iRange = convert_to_me4600_range(config_list_copy[i].iRange);
 			}
 		}
 
@@ -496,7 +555,7 @@ static int me0700_ai_io_stream_config(me_subdevice_t* subdevice, struct file* fi
 
 				default:
 					ME_IRQ_LOCK(((struct NET2282_usb_device *)instance->base.dev)->usb_IRQ_semaphore);
-						(void)me0700_set_range_relay(instance, instance->me0700_ranges[i], ME0700_AI_CHANNEL_ADDR[i]);
+						(void)me0700_set_range_relay(instance, instance->me0700_ranges[i], ME0700_AI_CHANNEL_ADDR[i], 1);
 					ME_IRQ_UNLOCK(((struct NET2282_usb_device *)instance->base.dev)->usb_IRQ_semaphore);
 			}
 		}
@@ -512,11 +571,12 @@ ERROR:
 
 
 static int me0700_ai_query_range_by_min_max(me_subdevice_t* subdevice, int unit, int* min, int* max, int* maxdata, int* range)
-{/// TODO DONE?
+{
 	me0700_ai_subdevice_t* instance;
 	int i;
 	int r = -1;
 	int diff = 21E6;
+	int err;
 
 	PDEBUG("executed. idx=0\n");
 
@@ -530,7 +590,12 @@ static int me0700_ai_query_range_by_min_max(me_subdevice_t* subdevice, int unit,
 
 	if (unit == ME_UNIT_VOLT)
 	{
-		return instance->ai_instance->base.me_subdevice_query_range_by_min_max((struct me_subdevice* )instance->ai_instance, unit, min, max, maxdata, range);
+		err = instance->ai_instance->base.me_subdevice_query_range_by_min_max((struct me_subdevice* )instance->ai_instance, unit, min, max, maxdata, range);
+		if (*range > 0)
+		{
+			*range += ME0700_AI_EXTRA_RANGE_NUMBER;
+		}
+		return err;
 	}
 	else if (unit == ME_UNIT_AMPERE)
 	{
@@ -556,7 +621,7 @@ static int me0700_ai_query_range_by_min_max(me_subdevice_t* subdevice, int unit,
 			*min = instance->ranges[r].min;
 			*max = instance->ranges[r].max;
 			*maxdata = ME0700_AI_MAX_DATA;
-			*range = r + instance->me4600_ranges_number;
+			*range = r + 1;
 		}
 	}
 
@@ -564,7 +629,7 @@ static int me0700_ai_query_range_by_min_max(me_subdevice_t* subdevice, int unit,
 }
 
 static int me0700_ai_query_number_ranges(me_subdevice_t* subdevice, int unit, int* count)
-{/// TODO DONE?
+{
 	me0700_ai_subdevice_t* instance;
 	instance = (me0700_ai_subdevice_t *) subdevice;
 
@@ -581,30 +646,30 @@ static int me0700_ai_query_number_ranges(me_subdevice_t* subdevice, int unit, in
 }
 
 static int me0700_ai_query_range_info(me_subdevice_t* subdevice, int range, int* unit, int* min, int* max, int* maxdata)
-{/// TODO DONE?
+{
 	me0700_ai_subdevice_t* instance;
+	int err = ME_ERRNO_SUCCESS;
 
 	instance = (me0700_ai_subdevice_t *) subdevice;
 
 	PDEBUG("executed. idx=0\n");
 
-	if (range < instance->me4600_ranges_number)
+	if ((range == 0) || (range > ME0700_AI_EXTRA_RANGE_NUMBER))
 	{
-		instance->ai_instance->base.me_subdevice_query_range_info((struct me_subdevice* )instance->ai_instance, range, unit, min, max, maxdata);
-	}
-	else if (range < instance->me4600_ranges_number + ME0700_AI_EXTRA_RANGE_NUMBER)
-	{
-		*unit = ME_UNIT_AMPERE;
-		*min = instance->ranges[range - instance->me4600_ranges_number].min;
-		*max = instance->ranges[range - instance->me4600_ranges_number].max;
-		*maxdata = ME0700_AI_MAX_DATA;
+		err = instance->ai_instance->base.me_subdevice_query_range_info((struct me_subdevice* )instance->ai_instance, convert_to_me4600_range(range), unit, min, max, maxdata);
+		if (err == ME_ERRNO_INVALID_RANGE)
+		{
+			PERROR("Invalid me0700 range specified. Must be between 0 and %d.\n", 4 + ME0700_AI_EXTRA_RANGE_NUMBER - 1);
+		}
 	}
 	else
 	{
-		PERROR("Invalid range specified. Must be between 0 and %d.\n", instance->me4600_ranges_number + ME0700_AI_EXTRA_RANGE_NUMBER - 1);
-		return ME_ERRNO_INVALID_RANGE;
+		*unit = ME_UNIT_AMPERE;
+		*min = instance->ranges[range - 1].min;
+		*max = instance->ranges[range - 1].max;
+		*maxdata = ME0700_AI_MAX_DATA;
 	}
-	return ME_ERRNO_SUCCESS;
+	return err;
 }
 
 static int me0700_ai_query_number_channels(me_subdevice_t* subdevice, int *number)
@@ -621,7 +686,7 @@ static int me0700_ai_query_number_channels(me_subdevice_t* subdevice, int *numbe
 }
 
 static int me0700_ai_query_subdevice_type(me_subdevice_t* subdevice, int* type, int* subtype)
-{/// DONE
+{
 	me0700_ai_subdevice_t* instance = (me0700_ai_subdevice_t *) subdevice;
 
 	PDEBUG("executed. idx=0\n");
@@ -630,7 +695,7 @@ static int me0700_ai_query_subdevice_type(me_subdevice_t* subdevice, int* type, 
 }
 
 static int me0700_ai_query_subdevice_caps(me_subdevice_t* subdevice, int* caps)
-{/// DONE
+{
 	me0700_ai_subdevice_t* instance;
 
 	instance = (me0700_ai_subdevice_t *) subdevice;
@@ -644,7 +709,7 @@ static int me0700_ai_query_subdevice_caps(me_subdevice_t* subdevice, int* caps)
 }
 
 static int me0700_ai_query_subdevice_caps_args(me_subdevice_t* subdevice, int cap, int* args, int* count)
-{/// DONE
+{
 	me0700_ai_subdevice_t* instance;
 	int err = ME_ERRNO_SUCCESS;
 
@@ -658,7 +723,7 @@ static int me0700_ai_query_subdevice_caps_args(me_subdevice_t* subdevice, int ca
 }
 
 static int me0700_ai_query_timer(me_subdevice_t* subdevice, int timer, int* base_frequency, uint64_t* min_ticks, uint64_t* max_ticks)
-{/// DONE
+{
 	me0700_ai_subdevice_t* instance = (me0700_ai_subdevice_t *) subdevice;
 
 	PDEBUG("executed. idx=0\n");
@@ -667,7 +732,7 @@ static int me0700_ai_query_timer(me_subdevice_t* subdevice, int timer, int* base
 }
 
 int me0700_ai_io_irq_start(me_subdevice_t* subdevice, struct file* filep, int channel, int irq_source, int irq_edge, int irq_arg, int flags)
-{/// TODO Implement
+{
 	me0700_ai_subdevice_t* instance = (me0700_ai_subdevice_t *) subdevice;
 	int err = ME_ERRNO_SUCCESS;
 
@@ -692,12 +757,14 @@ int me0700_ai_io_irq_start(me_subdevice_t* subdevice, struct file* filep, int ch
 	}
 
 	ME_SUBDEVICE_ENTER;
-		err = instance->ext_irq->base.me_subdevice_io_irq_start((struct me_subdevice* )instance->ext_irq, filep, channel, ME_IRQ_SOURCE_DIO_LINE, ME_IRQ_EDGE_RISING, irq_arg, flags);
-		if (err)
-			goto ERROR;
 		instance->irq_rised = 0;
 		instance->irq_status = 0;
 		instance->irq_status_flag = flags & ME_IO_IRQ_START_EXTENDED_STATUS;
+        instance->irq_count = 0;
+
+		err = instance->ext_irq->base.me_subdevice_io_irq_start((struct me_subdevice* )instance->ext_irq, filep, channel, ME_IRQ_SOURCE_DIO_LINE, ME_IRQ_EDGE_RISING, irq_arg, flags);
+		if (err)
+			goto ERROR;
 ERROR:
 	ME_SUBDEVICE_EXIT;
 
@@ -705,7 +772,7 @@ ERROR:
 }
 
 int me0700_ai_io_irq_wait(me_subdevice_t* subdevice, struct file *filep, int channel, int* irq_count, int* value, int time_out, int flags)
-{/// TODO Implement
+{
 	me0700_ai_subdevice_t* instance = (me0700_ai_subdevice_t *) subdevice;
 	int dummy_value;
 	int i;
@@ -722,7 +789,7 @@ int me0700_ai_io_irq_wait(me_subdevice_t* subdevice, struct file *filep, int cha
 	}
 
 	ME_SUBDEVICE_ENTER;
-		err = instance->ext_irq->base.me_subdevice_io_irq_wait((struct me_subdevice* )instance->ext_irq, filep, channel, irq_count, &dummy_value, time_out, ME_IO_IRQ_WAIT_NO_FLAGS);
+		err = instance->ext_irq->base.me_subdevice_io_irq_wait((struct me_subdevice* )instance->ext_irq, filep, channel, &instance->irq_count, &dummy_value, time_out, ME_IO_IRQ_WAIT_NO_FLAGS);
 		if (err)
 			goto ERROR;
 
@@ -738,6 +805,7 @@ int me0700_ai_io_irq_wait(me_subdevice_t* subdevice, struct file *filep, int cha
 		}
 		*value = irq_status_high | irq_status_low;
 		instance->irq_rised = 0;
+        *irq_count = instance->irq_count;
 ERROR:
 	ME_SUBDEVICE_EXIT;
 
@@ -745,7 +813,7 @@ ERROR:
 }
 
 int me0700_ai_io_irq_stop(me_subdevice_t* subdevice, struct file* filep, int channel, int flags)
-{/// TODO Implement
+{
 	me0700_ai_subdevice_t* instance = (me0700_ai_subdevice_t *) subdevice;
 	int err = ME_ERRNO_SUCCESS;
 
@@ -755,13 +823,14 @@ int me0700_ai_io_irq_stop(me_subdevice_t* subdevice, struct file* filep, int cha
 		err = instance->ext_irq->base.me_subdevice_io_irq_stop((struct me_subdevice* )instance->ext_irq, filep, channel, flags);
 		instance->irq_rised = -1;
 		instance->irq_status = 0;
+        instance->irq_count = 0;
 	ME_SUBDEVICE_EXIT;
 
 	return err;
 }
 
 int me0700_ai_io_irq_test(me_subdevice_t* subdevice, struct file* filep, int channel, int flags)
-{/// TODO Implement
+{
 	me0700_ai_subdevice_t* instance = (me0700_ai_subdevice_t *) subdevice;
 
 	PDEBUG("executed. idx=0\n");
@@ -784,9 +853,14 @@ int me0700_ai_io_irq_test(me_subdevice_t* subdevice, struct file* filep, int cha
 	return ME_ERRNO_SUCCESS;
 }
 
+static int me0700_ai_test_lock(me0700_ai_subdevice_t* instance)
+{
+	ME_IRQ_TEST_LOCK(&instance->me0700_bus_lock);
+	return ME_ERRNO_SUCCESS;
+}
 
 static int me0700_ai_irq_handle(me_subdevice_t* subdevice, uint32_t irq_status)
-{/// TODO Locks are missing
+{
 	me0700_ai_subdevice_t* instance = (me0700_ai_subdevice_t *) subdevice;
 	int err = ME_ERRNO_SUCCESS;
 	uint8_t irq_val = 0xFF;
@@ -795,7 +869,8 @@ static int me0700_ai_irq_handle(me_subdevice_t* subdevice, uint32_t irq_status)
 
 	if (irq_status & ME4600_IRQ_STATUS_BIT_EX)
 	{// External IRQ
-		if (!spin_trylock(&instance->me0700_bus_lock))
+		//
+		if (!me0700_ai_test_lock(instance))
 		{//Try again later
 			PERROR("Can not change internal bus now. I'll try later.\n");
 			return ME_ERRNO_SUCCESS;
@@ -823,7 +898,7 @@ static int me0700_ai_irq_handle(me_subdevice_t* subdevice, uint32_t irq_status)
 }
 
 static int me0700_ai_postinit(me_subdevice_t* subdevice, void* args)
-{/// DONE
+{
 	me0700_ai_subdevice_t* instance;
 
 	instance = (me0700_ai_subdevice_t *) subdevice;
@@ -839,8 +914,6 @@ static int me0700_ai_postinit(me_subdevice_t* subdevice, void* args)
 
 	instance->ctrl_port->base.me_subdevice_postinit((struct me_subdevice* )instance->ctrl_port, args);
 	instance->data_port->base.me_subdevice_postinit((struct me_subdevice* )instance->data_port, args);
-
-	instance->ai_instance->base.me_subdevice_query_number_ranges((struct me_subdevice* )instance->ai_instance, ME_UNIT_ANY, &instance->me4600_ranges_number);
 
 	instance->ai_instance->base.me_subdevice_query_number_channels((struct me_subdevice* )instance->ai_instance, &instance->number_channels);
 	instance->number_channels -= 4;
@@ -863,7 +936,7 @@ me0700_ai_subdevice_t* me0700_ai_constr(void* reg_base,
 											me_general_dev_t* dev,
 											me_lock_t* dio_lock,
 											unsigned int I_channels)
-{/// TODO DONE?
+{
 	me0700_ai_subdevice_t* subdevice;
 
 	PDEBUG("executed. idx=0\n");
@@ -919,8 +992,6 @@ me0700_ai_subdevice_t* me0700_ai_constr(void* reg_base,
 
 	// Save the number of current lines.
 	subdevice->number_I_channels = I_channels;
-
-	subdevice->me4600_ranges_number = 0;
 	subdevice->number_channels = 0;
 
 	// Initialize ranges.
@@ -939,15 +1010,18 @@ me0700_ai_subdevice_t* me0700_ai_constr(void* reg_base,
 	// +/-0.25A
 	subdevice->ranges[4].min = -250000;
 	subdevice->ranges[4].max = 249992;
+	// +/-0.25A
+	subdevice->ranges[5].min = -250000;
+	subdevice->ranges[5].max = 249992;
 	// +/-0.025A
-	subdevice->ranges[5].min = -25000;
-	subdevice->ranges[5].max = 24999;
+	subdevice->ranges[6].min = -25000;
+	subdevice->ranges[6].max = 24999;
 	// +/-0.0025A
-	subdevice->ranges[6].min = -2500;
-	subdevice->ranges[6].max = 2500;
+	subdevice->ranges[7].min = -2500;
+	subdevice->ranges[7].max = 2500;
 	// +/-0.00025A
-	subdevice->ranges[7].min = -250;
-	subdevice->ranges[7].max = 250;
+	subdevice->ranges[8].min = -250;
+	subdevice->ranges[8].max = 250;
 
 	// Override base class methods.
 	subdevice->base.me_subdevice_destructor = me0700_ai_destructor;

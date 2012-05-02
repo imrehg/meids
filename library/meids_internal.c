@@ -825,7 +825,7 @@ int me_translate_config_to_simple(meIOStreamConfig_t* long_config, int count, in
 			return ME_ERRNO_INVALID_REF;
 		}
 
-		if ((long_config + i)->iFlags & ~ME_IO_STREAM_CONFIG_TYPE_EXTRA_SHUNT)
+		if ((long_config + i)->iFlags)
 		{
 			LIBPERROR("Invalid meStreamConfig.iFlags specified. Should be ME_IO_STREAM_CONFIG_TYPE_NO_FLAGS\n");
 			return ME_ERRNO_INVALID_FLAGS;
@@ -837,10 +837,6 @@ int me_translate_config_to_simple(meIOStreamConfig_t* long_config, int count, in
 	{
 		(simple_config+ i)->iChannel = (long_config + i)->iChannel;
 		(simple_config+ i)->iRange = (long_config + i)->iStreamConfig;
-		if ((long_config + i)->iFlags & ME_IO_STREAM_CONFIG_TYPE_EXTRA_SHUNT)
-		{
-			(simple_config+ i)->iRange += ME_AI_EXTRA_RANGE;
-		}
 	}
 
 	if ((long_config->iRef == ME_REF_AIO_DIFFERENTIAL) || (long_config->iRef == ME_REF_AI_DIFFERENTIAL) || (long_config->iRef == ME_REF_AO_DIFFERENTIAL))
@@ -859,15 +855,7 @@ int me_translate_config_to_universal(meIOStreamSimpleConfig_t* simple_config, in
 	{
 		(long_config + i)->iFlags = ME_IO_STREAM_CONFIG_TYPE_NO_FLAGS;
 		(long_config + i)->iChannel = (simple_config+ i)->iChannel;
-		if ((simple_config+ i)->iRange & ME_AI_EXTRA_RANGE)
-		{
-			(long_config + i)->iStreamConfig = (simple_config+ i)->iRange & ~ME_AI_EXTRA_RANGE;
-			(long_config + i)->iFlags |= ME_IO_STREAM_CONFIG_TYPE_EXTRA_SHUNT;
-		}
-		else
-		{
-			(long_config + i)->iStreamConfig = (simple_config+ i)->iRange;
-		}
+		(long_config + i)->iStreamConfig = (simple_config+ i)->iRange;
 		(long_config + i)->iFlags = ME_IO_STREAM_CONFIG_TYPE_NO_FLAGS;
 		if (flags & ME_STREAM_CONFIG_DIFFERENTIAL)
 		{

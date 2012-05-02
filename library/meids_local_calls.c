@@ -1453,12 +1453,12 @@ int SingleConfig_Local(void* context, int device, int subdevice, int channel,
 	singleconfig.device = device;
 	singleconfig.subdevice = subdevice;
 	singleconfig.channel = channel;
-	singleconfig.single_config = (iFlags & ME_IO_SINGLE_CONFIG_EXTRA_SHUNT) ? config | ME_AI_EXTRA_RANGE : config;
+	singleconfig.single_config = config;
 	singleconfig.ref = reference;
 	singleconfig.trig_chain = synchro;
 	singleconfig.trig_type = trigger;
 	singleconfig.trig_edge = edge;
-	singleconfig.flags = iFlags & ~ME_IO_SINGLE_CONFIG_EXTRA_SHUNT;
+	singleconfig.flags = iFlags;
 	singleconfig.err_no = ME_ERRNO_SUCCESS;
 
 	err = ioctl(local_context->fd, ME_IO_SINGLE_CONFIG, &singleconfig);

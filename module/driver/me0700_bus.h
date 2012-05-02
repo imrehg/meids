@@ -62,12 +62,12 @@
 /**
  * @brief The ME-0700 (Axon) read function.
  */
-int me0700_get_range_relay_status(me0700_ai_subdevice_t* instance, uint8_t*  val, uint8_t addr);
+int me0700_get_range_relay_status(me0700_ai_subdevice_t* instance, uint8_t*  val, uint8_t addr, int lock);
 
 /**
  * @brief The ME-0700 (Axon) write function.
  */
-int me0700_set_range_relay(me0700_ai_subdevice_t* instance, uint8_t  val, uint8_t addr);
+int me0700_set_range_relay(me0700_ai_subdevice_t* instance, uint8_t  val, uint8_t addr, int lock);
 int me0700_update_range_relay(me0700_ai_subdevice_t* instance, uint8_t  val, uint8_t addr);
 
 /**

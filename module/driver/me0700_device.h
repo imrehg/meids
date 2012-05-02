@@ -40,7 +40,7 @@
 
 #  include "me0700_ai.h"
 
-#  define ME0700_VERSION	0x00020202
+#  define ME0700_VERSION	0x00020203
 
 
 /**

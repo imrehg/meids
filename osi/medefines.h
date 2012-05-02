@@ -231,8 +231,11 @@
 #define ME_IO_SINGLE_CONFIG_CONTINUE				0x80
 // Flag for multipurpose pin on me1400
 #define ME_IO_SINGLE_CONFIG_MULTIPIN				0x100
+/*
+//REMOVED!
 // Flag for extra precise range im me0700
 #define ME_IO_SINGLE_CONFIG_EXTRA_SHUNT				0x200
+*/
 // Flag for FI single mode
 #define ME_IO_SINGLE_CONFIG_FREQ_SINGLE_MODE		0x400	/* FI */
 // Flag for not setting background measure configuration
@@ -285,8 +288,11 @@
 #define ME_IO_STREAM_CONFIG_HARDWARE_ONLY			0x8
 
 #define ME_IO_STREAM_CONFIG_TYPE_NO_FLAGS			0x0
+/*
+//REMOVED!
 // Flag for extra precise range im me0700
 #define ME_IO_STREAM_CONFIG_TYPE_EXTRA_SHUNT		0x100
+*/
 
 #define ME_IO_STREAM_TRIGGER_TYPE_NO_FLAGS			0x0
 

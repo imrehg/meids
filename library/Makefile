@@ -5,7 +5,7 @@
 VER_MAGIC = 00
 VER_MAJOR = 01
 VER_MINOR = 03
-VER_BUILD = 36
+VER_BUILD = 37
 
 LIB_VERSION=0x$(VER_MAGIC)$(VER_MAJOR)$(VER_MINOR)$(VER_BUILD)
 
@@ -263,12 +263,12 @@ uninstall_config:
 .PHONY: install_svc
 install_svc:
 	@echo "Installing remote access server."
-	@SERVER=$(medriverSVC) $(PWD)/MEinstallSVC.sh
+	@SERVER=$(SVC) $(PWD)/MEinstallSVC.sh
 
 .PHONY: uninstall_svc
 uninstall_svc:
 	@echo "Uninstalling remote access server."
-	@SERVER=$(medriverSVC) $(PWD)/MEuninstallSVC.sh
+	@SERVER=$(SVC) $(PWD)/MEuninstallSVC.sh
 
 .PHONY: clean
 clean:

@@ -1,12 +1,12 @@
 CPPFLAGS := -I/usr/include/medriver -lpthread
 LDFLAGS := -lMEiDS
-CFLAGS := -Wall -O2
+CFLAGS := -Wall -ggdb
 
 ME_EXAMPLES_LIST := ai_block.tst ai_cb.tst ai_ext_list.tst ai_ext_start.tst ai_ext.tst ai_single.tst ai_range.tst ai_stream.tst ai.tst ai_single_scan.tst \
 	ao_cb.tst ao_cb_wraparound.tst ao_single_synch_ext.tst ao_single_synch.tst ao_single.tst \
 	ao_stream_synch_ext.tst ao_stream_synch_ext_one.tst ao_stream_synch.tst ao.tst ao_wraparound_synch_ext.tst ao_wraparound_synch.tst \
 	cnt.tst geterror.tst irq_cb.tst irq.tst lockAll.tst query.tst query_fast.tst \
-	di.tst do.tst \
+	di.tst do.tst curr_single.tst curr_stream.tst \
 	aiSingle.tst aoSingle.tst meIOStrFreqToTicks.tst
 
 all: clean examples
@@ -14,6 +14,12 @@ examples: ${ME_EXAMPLES_LIST}
 
 meIOStrFreqToTicks.tst: meIOStrFreqToTicks.tst.o
 meIOStrFreqToTicks.tst.o: meIOStrFreqToTicks.tst.c
+
+curr_single.tst: curr_single.tst.o
+curr_single.tst.o: curr_single.tst.c
+
+curr_stream.tst: curr_stream.tst.o
+curr_stream.tst.o: curr_stream.tst.c
 
 ai_block.tst: ai_block.tst.o
 ai_block.tst.o: ai_block.tst.c

@@ -9,11 +9,12 @@
 # as the modules version information and the header files must match.
 #
 
-DRV_VERSION := 0x00010354
+DRV_VERSION := 0x00010357
 
 
 ifndef LINUX_SRC
 LINUX_SRC := /usr/src/linux
+#LINUX_SRC := /home/ggebhardt/kernels/linux-2.6.21.3
 endif
 
 ifndef MODULE_DEST_EXT
@@ -35,6 +36,7 @@ endif
 
 EXTRA_CFLAGS := -DME_$(MEiDS_EXT)
 EXTRA_CFLAGS += -DKERNEL_RELEASE='"${KERNEL_VER}/"'
+#EXTRA_CFLAGS += -DME_SYNAPSE
 
 LOCAL_CFLAGS := -Wall
 

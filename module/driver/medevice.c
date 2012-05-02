@@ -2242,7 +2242,11 @@ int me_device_init_irq(me_device_t* me_device)
 #  else
 	INIT_DELAYED_WORK(&me_device->irq_context.irq_task, NET2282_IRQ_handle);
 #  endif
-	init_MUTEX(&(me_device->bus.local_dev.usb_IRQ_semaphore));
+#ifndef init_MUTEX
+    sema_init(&(me_device->bus.local_dev.usb_IRQ_semaphore), 1);
+#else
+    init_MUTEX(&(me_device->bus.local_dev.usb_IRQ_semaphore));
+#endif
 
 	me_device->irq_context.irq_urb = usb_alloc_urb(0, GFP_KERNEL);
 	if(me_device->irq_context.irq_urb)

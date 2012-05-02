@@ -27,6 +27,7 @@
 
 
 #include <linux/sched.h>
+#include <linux/delay.h>
 
 #include "me_debug.h"
 #include "me_error.h"
@@ -48,17 +49,37 @@ static int me0700_write_parallel_bus(me0700_ai_subdevice_t* instance, uint8_t va
  */
 static int me0700_synchronize_parallel_bus(me0700_ai_subdevice_t* instance);
 /**
- * @brief The ME-0700 (Axon) parallel bus protocol. Ret internal address in relays module.
+ * @brief The ME-0700 (Axon) parallel bus protocol. Return internal address in relays module.
  */
 static int me0700_set_parallel_bus_address(me0700_ai_subdevice_t* instance, uint8_t valaddr);
 
-int me0700_set_range_relay(me0700_ai_subdevice_t* instance, uint8_t  val, uint8_t addr)
+int me0700_clear_irq(me0700_ai_subdevice_t * instance, uint8_t val, uint8_t addr, int lock)
+{
+	int err;
+
+	if (lock) { ME_SPIN_LOCK(&instance->me0700_bus_lock); }
+		// Set address
+		err = me0700_set_parallel_bus_address(instance, addr);
+		if (err)
+			goto ERROR;
+
+		err = me0700_write_parallel_bus(instance, val);
+		if (err)
+			goto ERROR;
+
+ERROR:
+
+    if (lock) { ME_SPIN_UNLOCK(&instance->me0700_bus_lock); }
+	return err;
+}
+
+int me0700_set_range_relay(me0700_ai_subdevice_t* instance, uint8_t  val, uint8_t addr, int lock)
 {
 	int err;
 
 	PDEBUG("executed.\n");
 
-	ME_SPIN_LOCK(&instance->me0700_bus_lock);
+	if (lock) { ME_SPIN_LOCK(&instance->me0700_bus_lock); }
 		// Set address
 		err = me0700_set_parallel_bus_address(instance, addr);
 		if (err)
@@ -77,8 +98,9 @@ int me0700_set_range_relay(me0700_ai_subdevice_t* instance, uint8_t  val, uint8_
 		{
 			err = ME_ERRNO_VALUE_OUT_OF_RANGE;
 		}
-	ME_SPIN_UNLOCK(&instance->me0700_bus_lock);
 ERROR:
+
+    if (lock) { ME_SPIN_UNLOCK(&instance->me0700_bus_lock); }
 	return err;
 }
 
@@ -119,13 +141,11 @@ ERROR:
 	return err;
 }
 
-int me0700_get_range_relay_status(me0700_ai_subdevice_t* instance, uint8_t*  val, uint8_t addr)
+int me0700_get_range_relay_status(me0700_ai_subdevice_t * instance, uint8_t *  val, uint8_t addr, int lock)
 {
 	int err;
 
-	PDEBUG("executed.\n");
-
-	ME_SPIN_LOCK(&instance->me0700_bus_lock);
+    if (lock) { ME_SPIN_LOCK(&instance->me0700_bus_lock); }
 		// Set address
 		err = me0700_set_parallel_bus_address(instance, addr);
 		if (err)
@@ -144,8 +164,9 @@ int me0700_get_range_relay_status(me0700_ai_subdevice_t* instance, uint8_t*  val
 		{
 			err = ME_ERRNO_VALUE_OUT_OF_RANGE;
 		}
-	ME_SPIN_UNLOCK(&instance->me0700_bus_lock);
 ERROR:
+
+	if (lock) { ME_SPIN_UNLOCK(&instance->me0700_bus_lock); }
 	return err;
 }
 
@@ -196,13 +217,15 @@ int me0700_reset_OF_bits(me0700_ai_subdevice_t* instance, uint8_t* mask)
 	}
 
 	// Set address
-	err = me0700_get_range_relay_status(instance, &OF_val, ME0700_WRITE_PORT_ADDRESS_IRQ_STATUS);
+	err = me0700_get_range_relay_status(instance, &OF_val, ME0700_WRITE_PORT_ADDRESS_IRQ_STATUS, 0);
 	if (err)
 	{
 		OF_val = *mask;
 	}
 
-	err = me0700_set_range_relay(instance, OF_val, ME0700_WRITE_PORT_ADDRESS_IRQ_RESET);
+    OF_val = OF_val << 4;
+
+	err = me0700_clear_irq(instance, OF_val, ME0700_WRITE_PORT_ADDRESS_IRQ_RESET, 0);
 	if (!err)
 		*mask &= OF_val;
 	return err;
@@ -281,7 +304,9 @@ static int me0700_write_parallel_bus(me0700_ai_subdevice_t* instance, uint8_t va
 
 	tmp |= ME0700_WRITE_PORT_WRITE;
 	err = instance->ctrl_port->base.me_subdevice_io_single_write((struct me_subdevice* )instance->ctrl_port, NULL, 0, tmp, 0, ME_IO_SINGLE_TYPE_NO_FLAGS);
+
 ERROR:
+
 	return err;
 }
 
@@ -293,8 +318,12 @@ static int me0700_synchronize_parallel_bus(me0700_ai_subdevice_t* instance)
 
 	do
 	{
-		set_current_state(TASK_INTERRUPTIBLE);
-		schedule_timeout(1);
+        if (in_atomic()) {
+            udelay(10);
+        } else {
+            set_current_state(TASK_INTERRUPTIBLE);
+            schedule_timeout(1);
+        }
 
 		err = me0700_read_parallel_bus(instance, &tmp);
 		if (err)

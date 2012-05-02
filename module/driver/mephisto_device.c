@@ -72,7 +72,12 @@ me_device_t* mephisto_constr(mephisto_usb_device_t* device, me_device_t* instanc
 		}
 
 		// Initialize spin locks.
-		init_MUTEX(&mephisto_device->device_semaphore);
+#ifndef init_MUTEX
+        sema_init(&mephisto_device->device_semaphore, 1);
+#else
+        init_MUTEX(&mephisto_device->device_semaphore);
+#endif
+
 
 		// Set constans.
 		mephisto_get_device_info(mephisto_device, device->device);

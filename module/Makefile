@@ -9,6 +9,7 @@ PWD := $(shell pwd)
 endif
 ifndef LINUX_SRC
 LINUX_SRC := /usr/src/linux
+#LINUX_SRC := /home/ggebhardt/kernels/linux-2.6.21.3
 endif
 
 MEiDS_SRC_DRV := $(PWD)/driver

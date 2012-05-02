@@ -131,7 +131,12 @@ static int mephisto_probe(struct usb_interface *interface, const struct usb_devi
 		err = -ENOMEM;
 		goto ERROR_1;
 	}
+
+#ifndef init_MUTEX
+    sema_init(dev->usb_semaphore, 1);
+#else
 	init_MUTEX(dev->usb_semaphore);
+#endif
 
 	/// Initialize variables.
 	dev->dev = usb_get_dev(interface_to_usbdev(interface));

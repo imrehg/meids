@@ -42,7 +42,7 @@
 # include "me4600_ext_irq.h"
 
 // ME-0700 #defines
-#define ME0700_AI_EXTRA_RANGE_NUMBER			8
+#define ME0700_AI_EXTRA_RANGE_NUMBER			9
 #define ME0700_AI_RANGE_INVALID					0xF0
 #define ME0700_AI_RANGE_NONE					0xE0
 
@@ -80,12 +80,12 @@
 		me_lock_t me0700_bus_lock;				// Locks paraller bus.
 
 		me4600_range_entry_t ranges[ME0700_AI_EXTRA_RANGE_NUMBER];					/**< The ranges available on this subdevice. */
-		int me4600_ranges_number;
+// 		int me4600_ranges_number;
 		int number_channels;
 		int irq_status_flag;
 		int irq_rised;
 		uint8_t irq_status;
-
+        int irq_count;
 	} me0700_ai_subdevice_t;
 
 	/**

@@ -17,8 +17,8 @@ Features
 
 Requirements
 ------------
-- Python 2.3 or newer
-- Numerical Python 24.0 or newer
+- Python developement package 2.7 or newer.
+- Python NumPy development pachage.
 - On Windows meDriver.dll version 1.0 with Meilhaus driver system API or newer
 - On Linux libmedriver.so shared object 1.0.0 with Meilhaus driver system API or newer
 

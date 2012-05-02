@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 from distutils.core import setup, Extension
 import os
 import sys
@@ -9,7 +11,7 @@ if os.name == 'nt':
 	macro = [('ME_WINDOWS', None)]
 	library = ['meIDSmain']
 elif os.name == 'posix':
-	include_dirs = ['../../common']
+	include_dirs = ['../../common', '/usr/lib/python/site-packages/numpy/core/include']
 	library_dirs = ['.']
 	macro = [('ME_POSIX', None)]
 	library = ['MEiDS']

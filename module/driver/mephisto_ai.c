@@ -1848,7 +1848,12 @@ mephisto_ai_subdevice_t* mephisto_ai_constr(unsigned int idx, mephisto_AI_status
 	subdevice->base.idx = idx;
 
 	// Initialize segmented buffer.
+#ifndef init_MUTEX
+    sema_init(&subdevice->buffer_semaphore, 1);
+#else
 	init_MUTEX(&subdevice->buffer_semaphore);
+#endif
+
 	subdevice->seg_buf = create_seg_buffer(MEPHISTO_AI_SEG_BUF_CHUNK_COUNT, MEPHISTO_AI_SEG_BUF_CHUNK_SIZE);
 	if (!subdevice->seg_buf)
 	{

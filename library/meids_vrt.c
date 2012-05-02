@@ -623,6 +623,7 @@ int  ME_virtual_SingleList(const me_config_t* cfg, meIOSingle_t* list, int count
 	for (i=0; i<count; i++)
 	{
 		(list + i)->iErrno = (internal_list + i)->iErrno;
+		(list + i)->iValue = (internal_list + i)->iValue;
 	}
 
 	if (reference_list)
