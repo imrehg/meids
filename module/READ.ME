@@ -1,0 +1,64 @@
+MEiDS drivers installation.
+
+Requirements:
+- The kernel source tree has to be installed.
+- Be sure, that the link /usr/src/linux points to the appropriate kernel source tree.
+- The kernel has to support loadable modules.
+- The kernel has to support PCI devices.
+- The kernel has to support USB devices (optional: only for SynapseUSB).
+- The kernel has to support firmware loading.
+- The make utility and the gcc compiler have to be present.
+- Linux Standard Base (LSB) have to be present (for installation scripts to run proppely).
+
+Kernel preparation.
+ In order to do this you must have root privileges.
+ Before you can start the compilation and installation of the Meilhaus driver you have to prepare your kernel source tree.
+ 'Module.symvers' has to be in /usr/src/linux directory.
+ Start a shell and type on the command line. 
+ # cd /usr/src/linux
+ # make cloneconfig (or oldconfig if this target is not available)
+ # make prepare
+ # make modules_prepare
+  
+Compilation.
+ The driver's source code is in 'module' sub-directory.
+ Start a shell and change into the directory, where the MEiDS was extracted to. 
+ Then change path to 'module' sub-directory.
+ Type on the command line: 
+ # make modules
+ The driver has been compiled.
+ Modules are in 'module/bin' sub-directory. 
+
+ Tip: Check Makefile other targets.
+   # make help
+
+Installation.
+ In order to do this, you must have root privileges.
+ Start a shell and change into the directory, where the MEiDS was extracted to. 
+ Then change path to 'module' sub-directory.
+ Type on the command line: 
+ # make install
+ The installation script copy modules and firmware files to '/lib' directory.
+ Also starting scripts are installed and called.
+ Driver should start automatically.
+ You can check this in '/proc/modules'. Modules 'memainPCI' and 'memainUSB' should be present.
+  
+ NOTE: If you have other version of meilhaus driver in your system please uninstall it before new one is installed.
+ IMPORTAND: Kernel tree contains old (obsolate) drivers:
+  - legacy driver (me4000)
+  - MEiDS in version 1.2.29
+  This drivers are conflicting with current build.
+  Run "Obsolate_remove.sh" script to delete them.
+
+ 
+Uninstallation.
+ In order to do this, you must have root privileges.
+ Start a shell and change into the directory, where the MEiDS was extracted to. 
+ Then change path to 'module' sub-directory.
+ Type on the command line: 
+ # make uninstall
+  
+ Drivers will be unloaded and all files removed.
+ 
+ NOTE: Scripts use for driver instalation/deinstalation need 'install_initd' and 'remove_initd' in '/usr/lib/lsb' directory. 
+ Tip: Those scripts are part of 'LSB' package in Ubunt and 'insserv' package in SUSE. 

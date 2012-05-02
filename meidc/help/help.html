@@ -1,0 +1,277 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN">
+
+<html dir="ltr" lang="en" version="-//W3C//DTD HTML 4.01//EN">
+<head>
+
+<title>Help file for meilhaus driver system configuration application</title>
+
+<body>
+
+<h2><em><b>Meilhaus Intelligent Device Configuration Utility (ME-iDC) <br>
+for Meilhaus Intelligent Driver System (ME-iDS) </b></em></h2>
+<h2><em><b>-&nbsp;Help&nbsp;-</b></em></h2>
+<hr>
+
+<h2>Table of Content</h2>
+<dl style="font-size:14pt;">
+	<dt><a href="#chapter1"><b>1. Introduction</b></a></dt>
+	<dt><a href="#chapter2"><b>2. Move a Device Entry</b></a></dt>
+	<dt><a href="#chapter3"><b>3. Delete a Device Entry</b></a></dt>
+	<dt><a href="#chapter4"><b>4. Register, Edit and Delete a ME-MUX32-M</b></a></dt>
+	<dt><a href="#chapter5"><b>5. Register and Delete a ME-MUX32-S</b></a></dt>
+	<dt><a href="#chapter6"><b>6. Register, Edit and Delete a ME-DEMUX32</b></a></dt>
+	<dt><a href="#chapter7"><b>7. Register and Delete a ME-1001</b></a></dt>
+	<dt><a href="#chapter8"><b>8. Register and Delete a Remote Device</b></a></dt>
+</dl>
+
+<hr>
+
+<h2><a name="chapter1">1. Introduction </h2>
+<p>
+The Meilhaus Intelligent Device Configuration Utility (ME-iDC) offers you extensive features for service and configuration in combination with the Meilhaus Intelligent Driver System (ME-iDS). The usage is optional. Please terminate any process accessing
+the driver system before running this utility!
+</p>
+
+<p>
+Main Features:</p>
+<ul>
+  <li>Easy access to device informations (subdevices, serial number, ranges, ...).</li>
+  <li>The device number can be changed by moving the device entries.</li>
+  <li>&quot;Memory function&quot; for devices, which were temporarily removed from the system. </li>
+  <li> Registering accessories with the ME-iDS (e.g. ME-MultiSig system, ME-1001).</li>
+  <li> Registering remote devices (e.g. ME-Synapse LAN).</li>
+</ul>
+<p>
+The following is a screenshot of the main window of the utility.
+</p>
+
+<p>
+<img src="main.bmp">
+</p>
+
+<p>
+In the next few chapters we will describe the functionallity of the configuration utility.
+</p>
+
+<hr>
+
+<h2><a name="chapter2">2. Move a Device Entry</h2>
+<p>
+In order to move a device entry up or down in the device list please select a device entry from the device list by a left click.
+With a right click on the selected device entry a popup menu appears with the appropriate commands to move
+the device entry up or down.
+</p>
+
+<p>
+<img src="move.bmp">
+</p>
+
+<hr>
+
+<h2><a name="chapter3">3. Delete a Device Entry</h2>
+<p>
+Before you can delete a device entry you have to physically remove it from your system.
+After a reboot of the system the device entry is marked by a red cross in the device list (it can be used like a &quot;memory function&quot;).
+To delete the entry completely select the device entry from the device list by a left click.
+With a right click on the selected device entry a popup menu appears with the appropriate command to delete
+the device entry.
+</p>
+
+<p>
+<img src="delete_device.bmp">
+</p>
+
+<hr>
+
+<h2><a name="chapter4">4. Register, Edit and Delete a ME-MUX32-M</h2>
+<p>
+In order to simplify programming the ME-MultiSig system you can register a ME-MUX32-M device under an &quot;AI&quot; subdevice. Navigate to the subdevice entry in the configuration tree and select it by a left click. With a right click
+on the selected subdevice entry a popup menu appears with the appropriate command  to register a ME-MUX32-M device.
+</p>
+
+<p>
+<img src="create_mux32m.bmp">
+</p>
+
+<p>
+If you select the menu entry to register a ME-MUX32-M  the following dialog is shown.  Here you can select the analog input channel
+you want to connect your ME-MUX32-M device to, the &quot;DIO&quot; subdevice you want to use to
+control your ME-MUX32-M and whether you want to use the streaming operation mode (timer controlled) if applicable.
+</p>
+
+<p>
+<img src="create_mux32m_dialog.bmp">
+</p>
+
+<p>
+After you have registered a ME-MUX32-M   it is appended to the sub-tree of the subdevice.</p>
+
+<p>
+<img src="mux32m.bmp">
+</p>
+
+<p>
+In order to edit ME-MUX32-M settings or to delete a ME-MUX32-M  please select the ME-MUX32-M entry by a left click.
+With a right click on the selected ME-MUX32-M entry a popup menu appears with the appropriate commands.
+</p>
+
+<p>
+<img src="edit_mux32m.bmp">
+</p>
+
+<hr>
+
+<h2><a name="chapter5">5. Register and Delete a ME-MUX32-S</h2>
+<p>
+In order to register a ME-MUX32-S within a ME-MUX32-S(lave) list of a MUX-chain navigate to the ME-MUX32-S list
+in the configuration tree and select it by a left click. With a right click on the selected ME-MUX32-S list a popup
+menu appears with the appropriate command. You can register a maximum number of 7 ME-MUX32-S boards. </p>
+
+<p>
+<img src="add_mux32s.bmp">
+</p>
+
+<p>
+If you add a ME-MUX32-S device entry, it is appended to the ME-MUX32-S list.
+</p>
+
+<p>
+<img src="mux32s.bmp">
+</p>
+
+<p>
+In order to delete a ME-MUX32-S entry from a ME-MUX32-S list select the ME-MUX32-S entry by a left click.
+With a right click on the selected ME-MUX32-S entry a popup menu appears with the appropriate command.
+</p>
+
+<p>
+<img src="delete_mux32s.bmp">
+</p>
+
+<hr>
+
+<h2><a name="chapter6">6. Register, Edit and Delete a ME-DEMUX32</h2>
+<p>
+You can register a ME-DEMUX32  within an &quot;AO&quot; subdevice. Navigate to the subdevice entry in the configuration tree and select it by a left click. With a right click
+on the selected subdevice entry a popup menu appears with the appropriate command to register a ME-DEMUX32 device.
+</p>
+
+<p>
+<img src="create_demux32.bmp">
+</p>
+
+<p>
+If you selected the menu entry to register a ME-DEMUX32  a dialog is shown. Here you can select the analog output channel
+you want to connect your ME-DEMUX32 device to, the &quot;DIO&quot; subdevice you want to use to
+control the ME-DEMUX32 whether you want to use streaming operation mode (timer controlled) if applicable.
+</p>
+
+<p>
+<img src="create_demux32_dialog.bmp">
+</p>
+
+<p>
+After you registered a ME-DEMUX32  it is appended to the sub-tree of the subdevice.
+</p>
+
+<p>
+<img src="demux32.bmp">
+</p>
+
+<p>
+In order to edit the ME-DEMUX32 settings or to delete a ME-DEMUX32 entry select the ME-DEMUX32 entry by a left click.
+With a right click on the selected ME-DEMUX32 entry a popup menu appears with the appropriate commands.
+</p>
+
+<p>
+<img src="edit_demux32.bmp">
+</p>
+
+<hr>
+
+<h2><a name="chapter7">7. Register and Delete a ME-1001</h2>
+<p>
+It is possible to increase the channel count of a ME-1000/64 from 64 to 128 channels by adding
+a ME-1001 extension board (= ME-1000/128). Thus you can inform the  driver system about the number of channels
+(and subdevices) of your ME-1000 because of the driver system is not able to detect the extension by itself.
+</p>
+
+<p>
+In order to do this select the subdevice list of the ME-1000 in the configuration tree by a left click.
+With a right click on the selected subdevice list a popup menu appears with the appropriate command.
+</p>
+
+<p>
+<img src="add_me1001.bmp">
+</p>
+
+<p>
+If you add the ME-1001 extension board two additional &quot;DIO&quot; subdevices will be appended to the subdevice
+list of the ME-1000.</p>
+
+<p>
+<img src="me1001.bmp">
+</p>
+
+<p>
+In order to delete a ME-1001 extension board select the subdevice list of the ME-1000  in the configuration tree by a left click.
+With a right click on the selected subdevice list a popup menu appears with the appropriate command.
+If you delete the ME-1001 extension board the two additional subdevice entries in the subdevice list of the ME-1000 are deleted.
+</p>
+
+<p>
+<img src="delete_me1001.bmp">
+</p>
+
+<hr>
+
+<h2><a name="chapter8">8. Register and Delete a Remote Device</h2>
+<p>
+In order to register a remote device like the ME-Synapse LAN available through ethernet
+please select the device list by a left click. With a right click on the selected device list a
+popup menu appears with the appropriate command to register a remote device.
+</p>
+
+<p>
+<img src="create_remote_device.bmp">
+</p>
+
+<p>
+Next a wizard is started.
+</p>
+
+<p>
+<img src="create_remote_device_wizard_1.bmp">
+</p>
+
+<p>
+First you have to provide the IP address or the DNS name of the remote host which carries the device to register.
+If done please press the &quot;Next&quot; button.
+</p>
+
+<p>
+<img src="create_remote_device_wizard_2.bmp">
+</p>
+
+<p>
+Next you have to select a device from the list which you want to register.
+If done please press the &quot;Finish&quot; button.
+Next the newly added remote device will be shown in the device list.
+</p>
+
+<p>
+<img src="remote_device.bmp">
+</p>
+
+<p>
+In order to delete a remote device please select the remote device in the device list by a left click.
+With a right click on the selected remote device a popup menu appears providing the appropriate command
+to delete the remote device.
+</p>
+
+<p>
+<img src="delete_remote_device.bmp">
+</p>
+
+</body>
+</html>

@@ -1,0 +1,145 @@
+#! /bin/sh
+# Copyright (c) 2005 Meilhaus Electronic GmbH
+# Copyright (c) 2011 Meilhaus Electronic GmbH
+# All rights reserved.
+#
+# Author: Guenter Gebhardt
+# Author: Krzysztof Gantzke <k.gantzke@meilhaus.de>
+#
+# /etc/init.d/medriverMEPHISTO
+#   and its symbolic link
+# /usr/sbin/medriverMEPHISTO
+#
+# System startup script for ME-iDS
+#
+# LSB compatible service control script; see http://www.linuxbase.org/spec/
+#
+#
+### BEGIN INIT INFO
+# Provides:          medriverMEPHISTO
+# Required-Start:    $syslog
+# X-UnitedLinux-Should-Start:
+# Required-Stop:     $syslog
+# X-UnitedLinux-Should-Stop:
+# Default-Start:     1 2 3 5
+# Default-Stop:      0 6
+# Short-Description: Start script for Meilhaus PCI boards (part of ME-iDS).
+# Description:       You can use this script to load the memainPCI device driver module with automatically assigned major number
+### END INIT INFO
+#
+#
+# Note on runlevels:
+# 0 - halt/poweroff
+# 1 - single user
+# 2 - multiuser without network exported
+# 3 - multiuser w/ network (text mode)
+# 5 - multiuser w/ network and X11 (xdm)
+# 6 - reboot
+
+# Shell functions sourced from /etc/rc.status:
+#      rc_check         check and set local and overall rc status
+#      rc_status        check and set local and overall rc status
+#      rc_status -v     ditto but be verbose in local rc status
+#      rc_status -v -r  ditto and clear the local rc status
+#      rc_status -s     display "skipped" and exit with status 3
+#      rc_status -u     display "unused" and exit with status 3
+#      rc_failed        set local and overall rc status to failed
+#      rc_failed <num>  set local and overall rc status to <num>
+#      rc_reset         clear local rc status (overall remains)
+#      rc_exit          exit appropriate to overall rc status
+#      rc_active	checks whether a service is activated by symlinks
+#      rc_splash arg    sets the boot splash screen to arg (if active)
+if [ -f /etc/rc.status ]; then
+    . /etc/rc.status
+    # Reset status of this service
+    rc_reset
+else
+    rc_done=0
+    rc_failed=1
+fi
+
+# Return values acc. to LSB for all commands but status:
+# 0       - success
+# 1       - generic or unspecified error
+# 2       - invalid or excess argument(s)
+# 3       - unimplemented feature (e.g. "reload")
+# 4       - user had insufficient privileges
+# 5       - program is not installed
+# 6       - program is not configured
+# 7       - program is not running
+# 8--199  - reserved (8--99 LSB, 100--149 distrib, 150--199 appl)
+#
+# Note that starting an already running service, stopping
+# or restarting a not-running service as well as the restart
+# with force-reload (in case signaling is not supported) are
+# considered a success.
+
+#
+# Distributed with the Meilhaus driver system driver.
+#
+# You can use this script to install the memain device driver module
+# with automatically assigned major number.
+
+# Please modify these lines according to your needs.
+
+PATH=/sbin:/bin:/usr/bin
+MODPROBE="/sbin/modprobe"
+RMMOD="/sbin/rmmod"
+
+### I hope you don't have to modify anything below this line ###
+
+name="meMEPHISTO"
+node="mephistoSC"
+mode="666"
+
+return=$rc_done
+
+case "$1" in
+    start)
+	${MODPROBE} ${name} || return=${rc_failed}
+	major=`cat /proc/devices | awk "\\$2==\"${name}\" {print \\$1}"`
+	echo -n "Starting ${name} module "
+	echo -n  "with major number ${major}"
+	echo " "
+	if [ "`ps -e | grep -o udev`" = "" ]; then
+		echo -n "No udev detected, create device node."
+		# Remove old device node
+		rm -f /dev/${node}
+		# Make the device node
+		mknod /dev/${node} c  ${major} 0
+	fi
+
+	# Give appropriate group permissions
+	[ -c /dev/${name} ] && chmod $mode /dev/${node}
+
+	;;
+    stop)
+	echo "Removing MEiDS drivers."
+	${MODPROBE} -r ${name} 2>>/dev/null || ${RMMOD} -f ${name} 2>>/dev/null
+	;;
+    restart)
+	## If first returns OK call the second, if first or
+	## second command fails, set echo return value.
+	$0 stop  &&  $0 start  ||  return=${rc_failed}
+	;;
+    status)
+	echo -n "Enty in /proc/modules is: "
+	cat /proc/modules | grep -e "^.*${name}*"
+	echo -n "Entry in /proc/devices is: "
+	cat /proc/devices | grep -e "^.*${name}*"
+	echo -n "Entry in /proc/interrupts is: "
+	cat /proc/interrupts | grep -e "^.*${name}*"
+
+	;;
+    *)
+	echo "Usage: $0 {start|stop|restart|status}"
+	exit 1
+	;;
+esac
+
+# Inform the caller not only verbosely and set an exit status.
+test "$return" = "$rc_done" || exit 1
+exit 0
+
+
+

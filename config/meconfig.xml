@@ -1,0 +1,10 @@
+<?xml version="1.0" ?>
+<!DOCTYPE medrvconfig
+  SYSTEM 'medrvconfig.dtd'>
+<medrvconfig>
+	<date description="Date last modified">
+		Tue Jan 01 00:00:00 2008
+	</date>
+	<device_list description="Device list">
+	</device_list>
+</medrvconfig>

@@ -1,0 +1,14 @@
+2005-04-15	Guenter Gebhardt <g.gebhardt@meilhaus.de>
+	* Initial release.
+2007-04-12	Krzysztof Gantzke <k.gantzke@meilhaus.de>
+	* Returned value changes to tuple containing error code and description.
+2007-05-29	Krzysztof Gantzke <k.gantzke@meilhaus.de>
+	* General bug-fixing.
+  2008-11-10Krzysztof Gantzke <k.gantzke@meilhaus.de>
+	* Added missing flag.
+2009-04-06	Krzysztof Gantzke <k.gantzke@meilhaus.de>
+	* Added missing flag.
+2009-11-05	Krzysztof Gantzke <k.gantzke@meilhaus.de>
+	* Added support for FREQ_I/O.
+2009-11-26	Krzysztof Gantzke <k.gantzke@meilhaus.de>
+	* New examples.

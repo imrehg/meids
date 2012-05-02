@@ -1,0 +1,4 @@
+KERNEL=="medriverPCI", MODE="0666"
+KERNEL=="medriverUSB", MODE="0666"
+KERNEL=="mephistoSC",  MODE="0666"
+

@@ -1,0 +1,136 @@
+<!--
+Meilhaus Driver System Configuration Markup Language version 1.0.
+Use <medrvconfig> as the document element.
+-->
+
+<!ENTITY % common_attr "description CDATA #REQUIRED">
+
+<!-- medrvconfig is the root of the document -->
+<!ELEMENT medrvconfig (date, device_list)>
+<!ATTLIST medrvconfig %common_attr;>
+
+<!-- The file creation date -->
+<!ELEMENT date (#PCDATA)>
+<!ATTLIST date %common_attr;>
+
+<!-- The device list -->
+<!ELEMENT device_list (device_entry*)>
+<!ATTLIST device_list %common_attr;>
+
+<!-- The device list entry -->
+<!ELEMENT device_entry (tcpip?, device_info, subdevice_list?)>
+<!ATTLIST device_entry %common_attr;
+	access CDATA #REQUIRED
+	device_number CDATA #REQUIRED
+	device_plugged CDATA #REQUIRED>
+
+<!-- The network address of an remote device -->
+<!ELEMENT tcpip (remote_host, remote_device_number)>
+<!ATTLIST tcpip %common_attr;>
+<!ELEMENT remote_host (#PCDATA)>
+<!ATTLIST remote_host %common_attr;>
+<!ELEMENT remote_device_number (#PCDATA)>
+<!ATTLIST remote_device_number %common_attr;>
+
+<!-- The device information -->
+<!ELEMENT device_info (device_name, device_description, vendor_id, device_id, serial_no, ((bus_no, dev_no, func_no) | (usb_root_hub_no)))>
+<!ATTLIST device_info %common_attr;
+	bus CDATA #REQUIRED>
+<!ELEMENT device_name (#PCDATA)>
+<!ATTLIST device_name %common_attr;>
+<!ELEMENT device_description (#PCDATA)>
+<!ATTLIST device_description %common_attr;>
+<!ELEMENT vendor_id (#PCDATA)>
+<!ATTLIST vendor_id %common_attr;>
+<!ELEMENT device_id (#PCDATA)>
+<!ATTLIST device_id %common_attr;>
+<!ELEMENT serial_no (#PCDATA)>
+<!ATTLIST serial_no %common_attr;>
+<!ELEMENT bus_no (#PCDATA)>
+<!ATTLIST bus_no %common_attr;>
+<!ELEMENT dev_no (#PCDATA)>
+<!ATTLIST dev_no %common_attr;>
+<!ELEMENT func_no (#PCDATA)>
+<!ATTLIST func_no %common_attr;>
+<!ELEMENT usb_root_hub_no (#PCDATA)>
+<!ATTLIST usb_root_hub_no %common_attr;>
+
+<!-- Subdevice list -->
+<!ELEMENT subdevice_list (subdevice_entry+)>
+<!ATTLIST subdevice_list %common_attr;>
+
+<!-- Subdevice list entry -->
+<!ELEMENT subdevice_entry (subdevice_info, range_list?, (mux32m | demux32)?)>
+<!ATTLIST subdevice_entry %common_attr;
+	subdevice_number CDATA #REQUIRED
+	subdevice_type CDATA #REQUIRED
+	subdevice_extension CDATA #REQUIRED
+	subdevice_lock (0 | 1) #REQUIRED
+	lock_device CDATA #IMPLIED
+	lock_subdevice CDATA #IMPLIED>
+
+<!-- Subdevice info -->
+<!ELEMENT subdevice_info (subdevice_type, subdevice_sub_type, subdevice_number_channels)>
+<!ATTLIST subdevice_info %common_attr;>
+<!ELEMENT subdevice_type (#PCDATA)>
+<!ATTLIST subdevice_type %common_attr;>
+<!ELEMENT subdevice_sub_type (#PCDATA)>
+<!ATTLIST subdevice_sub_type %common_attr;>
+<!ELEMENT subdevice_number_channels (#PCDATA)>
+<!ATTLIST subdevice_number_channels %common_attr;>
+
+<!-- Range list -->
+<!ELEMENT range_list (range_entry+)>
+<!ATTLIST range_list %common_attr;>
+
+<!-- Range list entry -->
+<!ELEMENT range_entry (range_unit, range_min, range_max, range_max_data)>
+<!ATTLIST range_entry %common_attr;
+	range_number CDATA #REQUIRED>
+<!ELEMENT range_unit (#PCDATA)>
+<!ATTLIST range_unit %common_attr;>
+<!ELEMENT range_min (#PCDATA)>
+<!ATTLIST range_min %common_attr;>
+<!ELEMENT range_max (#PCDATA)>
+<!ATTLIST range_max %common_attr;>
+<!ELEMENT range_max_data (#PCDATA)>
+<!ATTLIST range_max_data %common_attr;>
+
+<!-- Multiplexer master device -->
+<!ELEMENT mux32m (mux32m_ai_channel, mux32m_dio_device, mux32m_dio_subdevice, (mux32m_timer_device, mux32m_timer_subdevice)?, mux32s_list)>
+<!ATTLIST mux32m %common_attr;
+	timed (0 | 1) #REQUIRED>
+<!ELEMENT mux32m_ai_channel (#PCDATA)>
+<!ATTLIST mux32m_ai_channel %common_attr;>
+<!ELEMENT mux32m_dio_device (#PCDATA)>
+<!ATTLIST mux32m_dio_device %common_attr;>
+<!ELEMENT mux32m_dio_subdevice (#PCDATA)>
+<!ATTLIST mux32m_dio_subdevice %common_attr;>
+<!ELEMENT mux32m_timer_device (#PCDATA)>
+<!ATTLIST mux32m_timer_device %common_attr;>
+<!ELEMENT mux32m_timer_subdevice (#PCDATA)>
+<!ATTLIST mux32m_timer_subdevice %common_attr;>
+
+<!-- Multiplexer slave device list -->
+<!ELEMENT mux32s_list (mux32s_entry*)>
+<!ATTLIST mux32s_list %common_attr;>
+
+<!-- Multiplexer slave device list entry -->
+<!ELEMENT mux32s_entry (#PCDATA)>
+<!ATTLIST mux32s_entry %common_attr;
+	mux32s_number CDATA #REQUIRED>
+
+<!-- Demultiplexer -->
+<!ELEMENT demux32 (demux32_ao_channel, demux32_dio_device, demux32_dio_subdevice, (demux32_timer_device, demux32_timer_subdevice)?)>
+<!ATTLIST demux32 %common_attr;
+	timed (0 | 1) #REQUIRED>
+<!ELEMENT demux32_ao_channel (#PCDATA)>
+<!ATTLIST demux32_ao_channel %common_attr;>
+<!ELEMENT demux32_dio_device (#PCDATA)>
+<!ATTLIST demux32_dio_device %common_attr;>
+<!ELEMENT demux32_dio_subdevice (#PCDATA)>
+<!ATTLIST demux32_dio_subdevice %common_attr;>
+<!ELEMENT demux32_timer_device (#PCDATA)>
+<!ATTLIST demux32_timer_device %common_attr;>
+<!ELEMENT demux32_timer_subdevice (#PCDATA)>
+<!ATTLIST demux32_timer_subdevice %common_attr;>
